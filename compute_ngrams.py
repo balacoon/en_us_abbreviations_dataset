@@ -12,6 +12,8 @@ def parse_args():
     ap.add_argument('--words', required=True)
     ap.add_argument('--n', type=int, default=2)
     ap.add_argument('--report', required=True)
+    ap.add_argument('--extend', nargs='+', default=[])
+    ap.add_argument('--max-word-freq', default=0.0, type=float)
     args = ap.parse_args()
     return args
 
@@ -56,8 +58,25 @@ def main():
     ngrams = sorted(ngrams, key=lambda item: item[1][0])
 
     with open(args.report, 'w') as fp:
+
+        unique = []
+        for path in args.extend:
+            with open(path, 'r') as ifp:
+                for line in ifp:
+                    fp.write(line)
+                    unique.append(line.split()[0])
+
+        ngrams_num = 0
         for gram, (word_freq, abbr_freq) in ngrams:
-            fp.write('{} {} {}\n'.format(gram, word_freq, abbr_freq))
+            to_add = True
+            for u in unique:
+                if u in gram:
+                    to_add = False
+                    break
+            if to_add and word_freq <= args.max_word_freq:
+                ngrams_num += 1
+                fp.write('{} {} {}\n'.format(gram, word_freq, abbr_freq))
+        print('Number of {}-grams written: {}'.format(args.n, ngrams_num))
 
 
 
